@@ -1,4 +1,5 @@
 import argparse
+from keyword import kwlist
 from mailbox import linesep
 from nis import match
 import pandas as pd
@@ -23,12 +24,13 @@ def read_and_validate_user_input():
     return i
 
 def main(name: str):
-    df = load_questions(name)
+    question_df = load_questions(name)
+    known_df = pd.DataFrame(columns=question_df.columns)
 
     print('Type "y" to mark as known, "n" to mark as to study, "s" to show the answer or "q" to exit.')
 
     while True:
-        random_row = df.sample(n=1)
+        random_row = question_df.sample(n=1)
         print(f"\n\t{random_row['Question'].values[0]}\n")
 
         try:
@@ -41,15 +43,16 @@ def main(name: str):
             print('Exiting')
             break
         elif i == 'y':
-            pass
+            known_df = known_df.append(random_row, ignore_index=True)
+            question_df.drop(random_row.index, inplace=True)
         elif i == 'n':
             pass
         elif i == 's':
-            print(f"Answer for the current question is: {random_row['Answer']}")
+            print(f"Answer for the current question is: {random_row['Answer'].values[0]}")
         else:
             print(f"Unknown input provided: {i}. Please read the doc")
 
-    # TODO Print stats
+    print(f"\n\t Known questions: {known_df.shape[0]} \n\t Still to learn questions: {question_df.shape[0]}")
 
 
 if __name__ == '__main__':
