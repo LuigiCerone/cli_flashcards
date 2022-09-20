@@ -1,11 +1,15 @@
 import argparse
-from keyword import kwlist
-from mailbox import linesep
-from nis import match
+import re
 import pandas as pd
+import warnings
+import pathlib
 
-def load_questions(file_name: str) -> pd.DataFrame:
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+def load_questions(file_name: str, known_dir: pathlib.Path) -> pd.DataFrame:
     # TODO Store progress in a file and try to read them back according to file name.
+    if not known_dir.is_dir():
+        known_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Reading questions from file: {file_name}")
     df = pd.read_csv(filepath_or_buffer=file_name, sep='\t', names=['Question', 'Answer'], lineterminator='\n')
@@ -23,15 +27,15 @@ def read_and_validate_user_input():
     
     return i
 
-def main(name: str):
-    question_df = load_questions(name)
+def main(file_name: str, known_dir: pathlib.Path):
+    question_df = load_questions(file_name=file_name, known_dir=known_dir)
     known_df = pd.DataFrame(columns=question_df.columns)
 
     print('Type "y" to mark as known, "n" to mark as to study, "s" to show the answer or "q" to exit.')
 
     while True:
         random_row = question_df.sample(n=1)
-        print(f"\n\t{random_row['Question'].values[0]}\n")
+        print(f"\n*** New question: \n\t{random_row['Question'].values[0]}\n")
 
         try:
             i = read_and_validate_user_input()
@@ -52,12 +56,13 @@ def main(name: str):
         else:
             print(f"Unknown input provided: {i}. Please read the doc")
 
-    print(f"\n\t Known questions: {known_df.shape[0]} \n\t Still to learn questions: {question_df.shape[0]}")
+    print(f"\nQuestions recap: \n\t Known: {known_df.shape[0]} \n\t Still to learn: {question_df.shape[0]}")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', help='File path to flashcards file', type=argparse.FileType('r', encoding='UTF-8'))
+    parser.add_argument('--store', help='File path to store known answers dir', type=pathlib.Path, default='./store_known/')
 
     args = parser.parse_args()
-    main(args.file.name)
+    main(args.file.name, args.store)
