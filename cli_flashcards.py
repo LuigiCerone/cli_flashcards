@@ -5,21 +5,20 @@ from pathlib import Path
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def load_questions(file_name: str, known_dir: Path) -> pd.DataFrame:
+def load_questions(file_name: Path, known_dir: Path) -> pd.DataFrame:
     if not known_dir.is_dir():
         known_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Reading questions from file: {file_name}")
     df = pd.read_csv(filepath_or_buffer=file_name, sep='\t', names=['Question', 'Answer'], lineterminator='\n')
    
-    old_state = Path.joinpath(known_dir, Path(file_name).with_suffix('.csv'))
+    old_state = Path.joinpath(known_dir, file_name.with_suffix('.csv'))
     print(f"Searching for: {old_state}")
     if old_state.is_file() and old_state.stat().st_size != 0:
         old_indexes_df = pd.read_csv(filepath_or_buffer=old_state, header=None, names=['Known_id'])
         df.drop(old_indexes_df['Known_id'], axis=0, inplace=True)
     
-    print(f"Succesfully loaded {len(df)} questions, restored {len(old_indexes_df)} known questions from previous runs")
-
+    print(f"Succesfully loaded {len(df)} questions, restored {len(old_indexes_df)} known questions from previous runs.\n")
     return df
 
 def read_and_validate_user_input():
@@ -33,11 +32,11 @@ def read_and_validate_user_input():
     
     return i
 
-def store_known_questions(known_df: pd.DataFrame, file_name: str, known_dir: Path):
-    dest = Path.joinpath(known_dir, Path(file_name))
+def store_known_questions(known_df: pd.DataFrame, file_name: Path, known_dir: Path):
+    dest = Path.joinpath(known_dir, file_name)
     known_df.to_csv(dest, columns=[], header=False)
 
-def main(file_name: str, known_dir: Path):
+def main(file_name: Path, known_dir: Path):
     question_df = load_questions(file_name=file_name, known_dir=known_dir)
     known_df = pd.DataFrame(columns=question_df.columns)
 
@@ -72,8 +71,8 @@ def main(file_name: str, known_dir: Path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', help='File path to flashcards file', type=argparse.FileType('r', encoding='UTF-8'))
+    parser.add_argument('file', help='File path to flashcards file', type=Path)
     parser.add_argument('--store', help='File path to store known answers dir', type=Path, default='./store_known/')
 
     args = parser.parse_args()
-    main(args.file.name, args.store)
+    main(args.file, args.store)
