@@ -1,5 +1,4 @@
 import argparse
-import re
 import pandas as pd
 import warnings
 from pathlib import Path
@@ -7,20 +6,19 @@ from pathlib import Path
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def load_questions(file_name: str, known_dir: Path) -> pd.DataFrame:
-    # TODO Store progress in a file and try to read them back according to file name.
     if not known_dir.is_dir():
         known_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Reading questions from file: {file_name}")
     df = pd.read_csv(filepath_or_buffer=file_name, sep='\t', names=['Question', 'Answer'], lineterminator='\n')
-    print(f"Succesfully loaded {len(df)} questions")
    
     old_state = Path.joinpath(known_dir, Path(file_name).with_suffix('.csv'))
     print(f"Searching for: {old_state}")
-    if old_state.is_file():
-        # TODO Check length
-        old_indexes_df = pd.read_csv(filepath_or_buffer=old_state)
-        print(old_indexes_df.head())
+    if old_state.is_file() and old_state.stat().st_size != 0:
+        old_indexes_df = pd.read_csv(filepath_or_buffer=old_state, header=None, names=['Known_id'])
+        df.drop(old_indexes_df['Known_id'], axis=0, inplace=True)
+    
+    print(f"Succesfully loaded {len(df)} questions, restored {len(old_indexes_df)} known questions from previous runs")
 
     return df
 
