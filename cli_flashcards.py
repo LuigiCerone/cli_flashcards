@@ -12,13 +12,15 @@ def load_questions(file_name: Path, known_dir: Path) -> pd.DataFrame:
     print(f"Reading questions from file: {file_name}")
     df = pd.read_csv(filepath_or_buffer=file_name, sep='\t', names=['Question', 'Answer'], lineterminator='\n')
    
-    old_state = Path.joinpath(known_dir, file_name.with_suffix('.csv'))
+    old_state = Path.joinpath(known_dir, file_name.with_suffix('.csv').name)
     print(f"Searching for: {old_state}")
     if old_state.is_file() and old_state.stat().st_size != 0:
         old_indexes_df = pd.read_csv(filepath_or_buffer=old_state, header=None, names=['Known_id'])
         df.drop(old_indexes_df['Known_id'], axis=0, inplace=True)
-    
-    print(f"Succesfully loaded {len(df)} questions, restored {len(old_indexes_df)} known questions from previous runs.\n")
+        print(f"Succesfully loaded {len(df)} questions, restored {len(old_indexes_df)} known questions from previous runs.\n")
+    else:
+        print(f"Succesfully loaded {len(df)} questions, restored 0 known questions from previous runs.\n")
+
     return df
 
 def read_and_validate_user_input():
@@ -33,7 +35,7 @@ def read_and_validate_user_input():
     return i
 
 def store_known_questions(known_df: pd.DataFrame, file_name: Path, known_dir: Path):
-    dest = Path.joinpath(known_dir, file_name)
+    dest = Path.joinpath(known_dir, file_name.name)
     known_df.to_csv(dest, columns=[], header=False)
 
 def main(file_name: Path, known_dir: Path):
@@ -43,6 +45,10 @@ def main(file_name: Path, known_dir: Path):
     print('Type "y" to mark as known, "n" to mark as to study, "s" to show the answer or "q" to exit.')
 
     while True:
+        if len(question_df) <= 0:
+            print("Congratulations! Deck mastered!")
+            break
+
         random_row = question_df.sample(n=1)
         print(f"\n*** New question: \n\t{random_row['Question'].values[0]}\n")
 

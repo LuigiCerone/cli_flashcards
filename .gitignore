@@ -130,3 +130,4 @@ dmypy.json
 
 *.csv
 ./store_known
+!example_data/data.csv
