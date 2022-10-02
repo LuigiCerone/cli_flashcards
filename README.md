@@ -79,6 +79,11 @@ source venv/bin/activate
 python cli_flashcards.py ./example_data/data.csv
 ```
 
+## Demo
+
+![Demo run](./demo.gif)
+
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
